@@ -1,0 +1,22 @@
+Clause Library with standard positions
+
+1. Credit term: fourteen (14) Calendar Days
+
+2. Agreement term/ Initial contract duration: one (1) Calendar Year
+
+3. Renewal term: automatically one (1) Calendar Year
+
+4. Termination notice: sixty (60) days
+
+5. Credit Limit: The sum of all amounts guaranteed by Ulink Assist on behalf of Counterparty on all letters of guarantee issued in accordance with this Agreement is subject to a maximum of S$20,000 (the “Credit Limit”), without the requirement of placement of any amount of deposit. If during a Patient’s treatment, the sum of all amounts guaranteed by Ulink Assist on all letters of guarantee issued exceeds the Credit Limit, Ulink Assist may increase the Patient’s LOG provided that Counterparty places a cash deposit with Ulink Assist to increase its Credit Limit in accordance with the following schedule in 3.2(c).
+
+6. Force Majeure: If Ulink Assist is unable to perform any or part of the service due to any cause reasonably beyond the control of Ulink Assist; such as but not limited to fire, flood, storm, explosion, or other acts of god, cases of strikes, lockouts and sabotage of assets, then such inability shall not give rise to any claim against Ulink Assist or be deemed to be a breach of this agreement.
+
+7. Indemnity: Counterparty irrevocably undertakes to keep Ulink Assist and its officers, directors, employees, representatives and agents fully and effectively indemnified against any and all losses, costs, damages, claims, demands, actions, proceedings, liabilities and expenses whatsoever (including without limitation all services, value added and other duties or taxes payable on such costs, charges and expenses and the costs and expenses of legal advisors and other experts) that Ulink Assist or any of its officers, directors, employees, representatives or agents may incur or suffer as a result of or in connection with (i) any breach of any of the obligations, warranties or undertakings made or assumed by Counterparty under this Agreement, (ii) the performance by Ulink Assist of any of its obligations under this Agreement, and (iii) the perfection, exercise, enforcement or the preservation of any rights, power or duty under this Agreement, or any other matter arising out of or in connection with this Agreement.
+
+8. Governing Law: This Agreement shall be governed by, and construed in accordance with, the laws of Singapore and the Parties hereto submit irrevocably to the non-exclusive jurisdiction of the courts of Singapore.
+
+9. Arbitration: Any dispute arising out of or in connection with this Service Agreement, including any question regarding its existence, validity or termination, shall be referred to and finally resolved by arbitration in Singapore in accordance with the Arbitration Rules of the Singapore International Arbitration Centre ("SIAC Rules") for the time being in force, which rules are deemed to be incorporated by reference in this clause.
+The Tribunal shall consist of one arbitrator. The language of the arbitration shall be English.
+
+

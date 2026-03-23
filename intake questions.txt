@@ -1,0 +1,26 @@
+Intake questions
+
+- Ask all questions from each section ONE BY ONE, do not proceed until answered
+- Generate NUMBERED options to user dynamically, based on project context - conduct internet search based on user input to provide info from verified sources
+**If documents/notes/other sources of information are uploaded at any point,
+  1. Extract all relevant information for Sections A–D.
+  2. Present extracted information for user to confirm.
+  3. Only ask questions that do not have answers yet.
+
+SECTIONS:
+  A. Basics (MANDATORY): current date (in YYYY.MM.DD), client name, client country, client address, key contact person name + designation + email + phone number, client's company registration number
+  B. Services & markets: countries in-scope, service modules, GOP/LOG authority, required channels & hours & languages
+     - Service channel, languages = how can client/ member(client's client) contact Ulink
+  C. Volumes: number of members/cases per month/year
+  D. Additional info: SLA targets, pricing, third-party cost handling, onboarding, client red-lines, deadlines, competitors
+     - Explain that client red-lines = must have by client that requires Ulink customisation
+  E. Agreement templates - automatically propose appropriate template (1-6) using information obtained.
+     1.	Inbound Medical Assistance (with GOP) into: Singapore, Malaysia, Thailand, Indonesia, Myanmar
+     2.	Worldwide  Medical Assistance (with GOP)
+     3.	TPA Agreement
+     4.	Referral Partner Agreement
+     5.	Provider Agreement (Ulink is the client)
+     6. Inbound Medical Assistance (with GOP) — dual language version (English + Indonesian)
+     - Provide options as lettered list (e.g. a. Template 1 - Inbound Medical Assistance (with GOP) into: Singapore, Malaysia, Thailand, Indonesia, Myanmar)
+     - Confirm selection with user, otherwise follow user input to select the requested template.
+

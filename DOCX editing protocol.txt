@@ -1,0 +1,89 @@
+DOCX Editing Protocol
+When editing DOCX templates, FOLLOW THIS CLOSELY.
+
+Absolute Editing Rules
+---------------------------
+You MUST NOT:
+- Change paragraph styles
+- Change font name or font size
+- Remove page breaks, section breaks, spacing, indentation, or tab stops
+- Merge text across fields (e.g., CompanyNameCountryAddress)
+
+You MUST ONLY:
+- Replace text inside the existing placeholder span.
+
+Placeholder Replacement Rules
+---------------------------
+Placeholders use the format {{PLACEHOLDER}}.
+Procedure:
+1. Scan each paragraph and table cell.
+2. Insert replacement text using the same formatting as the original placeholder run.
+3. Highlight ONLY the inserted replacement text in TURQUOISE.
+   - Do NOT highlight the entire paragraph.
+4. For unresolved placeholder, keep its original YELLOW highlight.
+
+Formatting Preservation
+---------------------------
+Replacement text must inherit formatting of the paragraph:
+- Font name
+- Font size
+- Bold / italic / underline
+- Capitalization
+- Paragraph alignment
+- Spacing
+
+You must never change template formatting.
+
+Table Editing Rules (Fee Schedule)
+---------------------------
+When modifying tables:
+- Edit table cell contents directly.
+- Do not modify table structure - column widths, row heights, formatting
+- Match is case-insensitive
+- If removing rows, remove only the relevant rows without affecting surrounding structure.
+
+Possible Actions:
+a. REPLACE
+Find exact text: "<OLD TEXT>"
+Replace with: "<NEW TEXT>"
+b. DELETE ROW(S)
+Delete rows where ANY cell contains:
+- "<PATTERN 1>"
+- "<PATTERN 2>"
+c. DELETE SECTION
+Header contains: "<HEADER TEXT>"
+Section type:
+- Numbered (e.g. "1.", "2.") OR
+- Label-based (e.g. "Kuala Lumpur:", "Penang:")
+Delete:
+- Header row
+- ALL rows below it until next section/category
+
+Page Layout Protection
+---------------------------
+You must preserve the exact layout:
+- Page breaks
+- Section breaks
+- Headers / footers
+- Signature blocks
+- Table placements
+
+No edits may alter pagination.
+
+Placeholder Verification
+---------------------------
+Before returning the generated agreement:
+1. Scan the entire document.
+2. Confirm no placeholders remain except those intentionally skipped.
+3. If any placeholder remains, fix it before delivering.
+
+Output Validation
+---------------------------
+Before delivering the DOCX verify:
+- All placeholders replaced correctly
+- Formatting matches template
+- Highlight applies only to inserted text
+- No page breaks removed
+- No paragraph merging occurred
+- Tables remain intact
+- Fee schedule edits correct

@@ -1,0 +1,18 @@
+Placeholder Mapping
+
+{{CURRENT DATE}} -> Current date in YYYY.MM.DD
+{{DATE}} -> DD of current date
+{{MONTH}} -> convert MM of current date to MMM format
+{{YEAR}} -> YYYY of current date
+{{CLIENT NAME}} -> Client name
+{{CLIENT COUNTRY}} -> Client country
+{{REG NO}} -> Client company registration number
+{{ADDRESS}} -> Client address
+{{CREDIT TERM}} -> Credit term
+{{KEY CONTACT NAME}} -> Name of key contact person
+{{KEY CONTACT NUMBER}} -> Phone number of key contact person
+{{KEY CONTACT EMAIL}} -> Email of key contact person
+{{KEY CONTACT ROLE}} -> Designation of key contact person
+{{AGREEMENT TERM}} -> Initial term of contract
+{{RENEWAL TERM}} -> Renewal term
+{{TERMINATION NOTICE}} -> termination notice period

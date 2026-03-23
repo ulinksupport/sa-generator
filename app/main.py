@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from .db import Base, engine, get_db
-from .models import Matter, Message, MatterAnswer
+from .models import Client, Matter, Message, MatterAnswer
 from .knowledge_loader import load_source_documents
 from .openai_service import run_document_driven_intake
 
@@ -173,6 +173,23 @@ def start_matter_intake(matter_id: int, db: Session = Depends(get_db)):
         next_options=next_options,
         is_complete=is_complete
     )
+
+@app.post("/test-create-matter")
+def create_test_matter(db: Session = Depends(get_db)):
+    client = Client(name="Test Client")
+    db.add(client)
+    db.commit()
+    db.refresh(client)
+
+    matter = Matter(client_id=client.id, display_name="Test Matter")
+    db.add(matter)
+    db.commit()
+    db.refresh(matter)
+
+    return {
+        "client_id": client.id,
+        "matter_id": matter.id
+    }
 
 @app.get("/health")
 def health():

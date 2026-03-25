@@ -299,7 +299,7 @@ def ui():
         return;
       }
       nextOptionsEl.innerHTML = options
-        .map(opt => `<span class="pill">${escapeHtml(String(opt))}</span>`)
+        .map((opt, idx) => `<div class="pill">${idx + 1}. ${escapeHtml(String(opt))}</div>`)
         .join("");
     }
 
@@ -513,15 +513,41 @@ def chat_with_matter(matter_id: int, payload: ChatRequest, db: Session = Depends
     extracted_fields = result.get("extracted_fields", {})
     saved_fields = {}
 
-    for key, value in extracted_fields.items():
-        if value is not None and str(value).strip():
-            clean_value = str(value).strip()
-            upsert_answer(db, matter_id, key, clean_value)
-            saved_fields[key] = clean_value
+SKIP_VALUES = {"skip", "not sure", "unknown", ""}
+
+for key, value in extracted_fields.items():
+    if value is None:
+        continue
+
+    clean_value = str(value).strip()
+
+    # skip handling
+    if clean_value.lower() in SKIP_VALUES:
+        continue
+
+    # save original field
+    upsert_answer(db, matter_id, key, clean_value)
+    saved_fields[key] = clean_value
+
+    # special handling for current_date
+    if key == "current_date":
+        try:
+            dt = datetime.strptime(clean_value, "%Y.%m.%d")
+
+            year = dt.strftime("%Y")
+            month = dt.strftime("%b")   # Jan, Feb, Mar
+            day = dt.strftime("%d")
+
+            upsert_answer(db, matter_id, "year", year)
+            upsert_answer(db, matter_id, "month", month)
+            upsert_answer(db, matter_id, "date", day)
+
+        except Exception:
+            pass
 
     db.commit()
 
-    assistant_reply = result.get("assistant_reply", "Okay.")
+    assistant_reply = result.get("next_question") or result.get("assistant_reply", "Okay.")
     missing_items = result.get("missing_items", [])
     next_question = result.get("next_question")
     next_options = result.get("next_options", [])
@@ -562,7 +588,7 @@ def start_matter_intake(matter_id: int, db: Session = Depends(get_db)):
         user_message="Start the intake and ask the first question."
     )
 
-    assistant_reply = result.get("assistant_reply", "Let's begin.")
+    assistant_reply = result.get("next_question") or result.get("assistant_reply", "Let's begin.")
     missing_items = result.get("missing_items", [])
     next_question = result.get("next_question")
     next_options = result.get("next_options", [])

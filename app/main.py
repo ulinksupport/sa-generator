@@ -21,16 +21,426 @@ def home():
 @app.get("/ui", response_class=HTMLResponse)
 def ui():
     return """
-    <html>
-      <head>
-        <title>BD Service Agreement Generator</title>
-      </head>
-      <body>
-        <h1>BD Service Agreement Generator</h1>
-        <p>Your Render site is working.</p>
-      </body>
-    </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BD Service Agreement Generator</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f7fb;
+      color: #1f2937;
+    }
+    .app {
+      display: grid;
+      grid-template-columns: 260px 1fr 320px;
+      height: 100vh;
+    }
+    .sidebar, .rightbar {
+      background: #ffffff;
+      border-right: 1px solid #e5e7eb;
+      padding: 16px;
+      overflow-y: auto;
+    }
+    .rightbar {
+      border-right: none;
+      border-left: 1px solid #e5e7eb;
+    }
+    .main {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .topbar {
+      background: #ffffff;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 12px 16px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .chat-wrap {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+    .composer {
+      background: #ffffff;
+      border-top: 1px solid #e5e7eb;
+      padding: 12px 16px;
+      display: flex;
+      gap: 8px;
+    }
+    textarea {
+      flex: 1;
+      min-height: 70px;
+      resize: vertical;
+      padding: 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font: inherit;
+    }
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      background: #2563eb;
+      color: white;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button.secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .message {
+      max-width: 80%;
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      white-space: pre-wrap;
+      line-height: 1.45;
+    }
+    .user {
+      margin-left: auto;
+      background: #dbeafe;
+    }
+    .assistant {
+      margin-right: auto;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+    }
+    .label {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .value {
+      font-size: 14px;
+      word-break: break-word;
+    }
+    .small {
+      font-size: 13px;
+      color: #4b5563;
+    }
+    .status {
+      font-size: 14px;
+      color: #374151;
+    }
+    .matter-id {
+      font-weight: 700;
+      color: #2563eb;
+    }
+    .hint {
+      font-size: 13px;
+      color: #6b7280;
+      margin-top: 8px;
+    }
+    ul {
+      padding-left: 18px;
+      margin: 6px 0 0;
+    }
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .pill {
+      display: inline-block;
+      background: #eef2ff;
+      color: #3730a3;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      margin: 4px 6px 0 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <h2 style="margin-top:0;">BD Tool</h2>
+
+      <div class="card">
+        <div class="label">Matter Controls</div>
+        <div class="row">
+          <button id="createMatterBtn">Create test matter</button>
+          <button id="startBtn" class="secondary" disabled>Start intake</button>
+        </div>
+        <div class="hint">Use Create test matter first, then Start intake.</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Current Matter</div>
+        <div class="value">Matter ID: <span id="matterId" class="matter-id">None</span></div>
+        <div class="value">Client ID: <span id="clientId">None</span></div>
+      </div>
+
+      <div class="card">
+        <div class="label">Last Assistant Guidance</div>
+        <div id="nextQuestion" class="value">No question yet.</div>
+        <div id="nextOptions" class="small"></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <strong>Shared Chat</strong>
+          <div class="status" id="statusText">Ready.</div>
+        </div>
+        <div>
+          <button id="clearChatBtn" class="secondary">Clear screen</button>
+        </div>
+      </div>
+
+      <div id="chatWrap" class="chat-wrap"></div>
+
+      <div class="composer">
+        <textarea id="messageInput" placeholder="Type your message here..." disabled></textarea>
+        <button id="sendBtn" disabled>Send</button>
+      </div>
+    </main>
+
+    <aside class="rightbar">
+      <h3 style="margin-top:0;">Structured Data</h3>
+
+      <div class="card">
+        <div class="label">Extracted Fields</div>
+        <div id="fieldsBox" class="small">No fields extracted yet.</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Missing Items</div>
+        <div id="missingBox" class="small">None yet.</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Completion</div>
+        <div id="completeBox" class="value">Not complete</div>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    let currentMatterId = null;
+    let currentClientId = null;
+
+    const chatWrap = document.getElementById("chatWrap");
+    const matterIdEl = document.getElementById("matterId");
+    const clientIdEl = document.getElementById("clientId");
+    const statusText = document.getElementById("statusText");
+    const messageInput = document.getElementById("messageInput");
+    const sendBtn = document.getElementById("sendBtn");
+    const startBtn = document.getElementById("startBtn");
+    const createMatterBtn = document.getElementById("createMatterBtn");
+    const clearChatBtn = document.getElementById("clearChatBtn");
+    const fieldsBox = document.getElementById("fieldsBox");
+    const missingBox = document.getElementById("missingBox");
+    const completeBox = document.getElementById("completeBox");
+    const nextQuestionEl = document.getElementById("nextQuestion");
+    const nextOptionsEl = document.getElementById("nextOptions");
+
+    function setStatus(text) {
+      statusText.textContent = text;
+    }
+
+    function addMessage(role, content) {
+      const div = document.createElement("div");
+      div.className = "message " + (role === "user" ? "user" : "assistant");
+      div.textContent = content;
+      chatWrap.appendChild(div);
+      chatWrap.scrollTop = chatWrap.scrollHeight;
+    }
+
+    function renderFields(fields) {
+      const entries = Object.entries(fields || {});
+      if (!entries.length) {
+        fieldsBox.innerHTML = "No fields extracted yet.";
+        return;
+      }
+      fieldsBox.innerHTML = entries
+        .map(([k, v]) => `<div style="margin-bottom:8px;"><strong>${escapeHtml(k)}</strong><br>${escapeHtml(String(v))}</div>`)
+        .join("");
+    }
+
+    function renderMissing(items) {
+      if (!items || !items.length) {
+        missingBox.innerHTML = "None.";
+        return;
+      }
+      missingBox.innerHTML = "<ul>" + items.map(item => `<li>${escapeHtml(item)}</li>`).join("") + "</ul>";
+    }
+
+    function renderOptions(options) {
+      if (!options || !options.length) {
+        nextOptionsEl.innerHTML = "";
+        return;
+      }
+      nextOptionsEl.innerHTML = options
+        .map(opt => `<span class="pill">${escapeHtml(String(opt))}</span>`)
+        .join("");
+    }
+
+    function updateResponsePanels(data) {
+      renderFields(data.extracted_fields || {});
+      renderMissing(data.missing_items || []);
+      completeBox.textContent = data.is_complete ? "Complete" : "Not complete";
+      nextQuestionEl.textContent = data.next_question || data.reply || "No question.";
+      renderOptions(data.next_options || []);
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    async function createMatter() {
+      setStatus("Creating test matter...");
+      createMatterBtn.disabled = true;
+
+      try {
+        const res = await fetch("/test-create-matter", {
+          method: "POST"
+        });
+        if (!res.ok) {
+          throw new Error("Failed to create matter");
+        }
+
+        const data = await res.json();
+        currentMatterId = data.matter_id;
+        currentClientId = data.client_id;
+
+        matterIdEl.textContent = currentMatterId;
+        clientIdEl.textContent = currentClientId;
+
+        startBtn.disabled = false;
+        messageInput.disabled = true;
+        sendBtn.disabled = true;
+
+        addMessage("assistant", "Test matter created. Click 'Start intake' to begin.");
+        setStatus("Matter created.");
+      } catch (err) {
+        addMessage("assistant", "Error creating matter: " + err.message);
+        setStatus("Error.");
+      } finally {
+        createMatterBtn.disabled = false;
+      }
+    }
+
+    async function startIntake() {
+      if (!currentMatterId) {
+        alert("Create a matter first.");
+        return;
+      }
+
+      setStatus("Starting intake...");
+      startBtn.disabled = true;
+
+      try {
+        const res = await fetch(`/matters/${currentMatterId}/start`);
+        if (!res.ok) {
+          throw new Error("Failed to start intake");
+        }
+
+        const data = await res.json();
+        addMessage("assistant", data.reply);
+        updateResponsePanels(data);
+
+        messageInput.disabled = false;
+        sendBtn.disabled = false;
+        messageInput.focus();
+
+        setStatus("Intake started.");
+      } catch (err) {
+        addMessage("assistant", "Error starting intake: " + err.message);
+        setStatus("Error.");
+        startBtn.disabled = false;
+      }
+    }
+
+    async function sendMessage() {
+      const text = messageInput.value.trim();
+      if (!text || !currentMatterId) return;
+
+      addMessage("user", text);
+      messageInput.value = "";
+      sendBtn.disabled = true;
+      setStatus("Sending...");
+
+      try {
+        const res = await fetch(`/matters/${currentMatterId}/chat`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ message: text })
+        });
+
+        if (!res.ok) {
+          throw new Error("Chat request failed");
+        }
+
+        const data = await res.json();
+        addMessage("assistant", data.reply);
+        updateResponsePanels(data);
+        setStatus("Reply received.");
+      } catch (err) {
+        addMessage("assistant", "Error sending message: " + err.message);
+        setStatus("Error.");
+      } finally {
+        sendBtn.disabled = false;
+        messageInput.focus();
+      }
+    }
+
+    createMatterBtn.addEventListener("click", createMatter);
+    startBtn.addEventListener("click", startIntake);
+    sendBtn.addEventListener("click", sendMessage);
+
+    messageInput.addEventListener("keydown", function(event) {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+      }
+    });
+
+    clearChatBtn.addEventListener("click", function() {
+      chatWrap.innerHTML = "";
+      fieldsBox.innerHTML = "No fields extracted yet.";
+      missingBox.innerHTML = "None yet.";
+      completeBox.textContent = "Not complete";
+      nextQuestionEl.textContent = "No question yet.";
+      nextOptionsEl.innerHTML = "";
+      setStatus("Screen cleared.");
+    });
+  </script>
+</body>
+</html>
     """
+    
 class ChatRequest(BaseModel):
     message: str
 

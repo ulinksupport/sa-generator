@@ -8,6 +8,9 @@ from .models import Client, Matter, Message, MatterAnswer
 from .knowledge_loader import load_source_documents
 from .openai_service import run_document_driven_intake
 
+from datetime import datetime
+from sqlalchemy.exc import IntegrityError
+
 app = FastAPI()
 
 Base.metadata.create_all(bind=engine)
@@ -440,7 +443,7 @@ def ui():
 </body>
 </html>
     """
-    
+
 class ChatRequest(BaseModel):
     message: str
 
@@ -586,20 +589,32 @@ def start_matter_intake(matter_id: int, db: Session = Depends(get_db)):
 
 @app.post("/test-create-matter")
 def create_test_matter(db: Session = Depends(get_db)):
-    client = Client(name="Test Client")
-    db.add(client)
-    db.commit()
-    db.refresh(client)
+    timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    client_name = f"Test Client {timestamp}"
+    matter_name = f"Test Matter {timestamp}"
 
-    matter = Matter(client_id=client.id, display_name="Test Matter")
-    db.add(matter)
-    db.commit()
-    db.refresh(matter)
+    try:
+        client = Client(name=client_name)
+        db.add(client)
+        db.commit()
+        db.refresh(client)
 
-    return {
-        "client_id": client.id,
-        "matter_id": matter.id
-    }
+        matter = Matter(client_id=client.id, display_name=matter_name)
+        db.add(matter)
+        db.commit()
+        db.refresh(matter)
+
+        return {
+            "client_id": client.id,
+            "matter_id": matter.id
+        }
+
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Could not create test matter because the test client name already exists.")
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Could not create test matter: {str(e)}")
 
 @app.get("/health")
 def health():

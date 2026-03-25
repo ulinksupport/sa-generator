@@ -562,7 +562,7 @@ for key, value in extracted_fields.items():
             content=assistant_reply
         )
     )
-    db.commit()
+db.commit()
 
     return ChatResponse(
         reply=assistant_reply,

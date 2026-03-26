@@ -9,10 +9,10 @@ from typing import Any
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from docx_generator import generate_docx
-from knowledge_loader import load_knowledge
-from openai_service import run_document_driven_intake
-from placeholder_mapper import build_placeholder_mapping
+from app.openai_service import run_document_driven_intake
+from app.knowledge_loader import load_knowledge
+from app.placeholder_mapper import build_placeholder_mapping
+from app.docx_generator import generate_docx
 
 app = FastAPI(title="BD Service Agreement Generator")
 

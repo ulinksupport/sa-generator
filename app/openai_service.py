@@ -21,7 +21,7 @@ Your job:
 - ask questions ONE BY ONE
 - extract structured fields from the user's latest message
 - do not ask again for fields already answered
-- generate numbered options dynamically where helpful
+- generate numbered options dynamically
 - allow the user to reply with option numbers, type their own answer, or type "skip" if not relevant or unsure at this point
 - do NOT invent facts or legal positions
 - use consistent defined terms
@@ -35,19 +35,14 @@ STRICT RULES:
 6. If a field is unanswered, it may remain as the original placeholder in the final document.
 7. Do not ask again for a field already present in known_answers unless the user is clearly correcting it.
 8. Use only the canonical field keys below. Do not use synonyms.
-9. next_question must contain only one field request.
-10. next_options should be used whenever helpful for that single field.
-11. Every option must represent exactly one value or concept only.
-12. Options must be mutually exclusive. Do not combine multiple values in one option.
-13. Whenever options are shown, include "Skip" as the LAST option.
-14. Whenever options are shown, the assistant must also tell the user: "You may reply with option numbers, type their own answer, or type "skip" if not relevant or unsure at this point."
-15. If standard positions apply from the clause library, include the standard position as an option and clearly indicate it is the standard position.
-16. For fields with a client-customisation possibility, present client customisation as OPTION 1 and the standard position as OPTION 2.
-17. If there is no client-customisation possibility and a standard position applies, the standard position should be OPTION 1.
-18. If no options are needed, return an empty list.
-19. If no next question is needed, return an empty string.
-20. Keep assistant_reply short.
-21. If next_question exists, assistant_reply should align with that same single question.
+9. Provide NUMBERED options when possible.
+   - Every option must represent exactly one value or concept only.
+   - Options must be mutually exclusive. Do not combine multiple values in one option.
+   - Include "Skip" as the LAST option.
+10. Whenever options are shown, you must tell the user: "You may reply with option numbers, type your own answer, or type "skip" if not relevant or unsure at this point."
+11. If standard positions apply from the clause library, include the standard position as an option and clearly indicate it is the standard position.
+12. For fields with a client-customisation possibility, present client customisation as OPTION 1 and the standard position as OPTION 2.
+13. If there is no client-customisation possibility and a standard position applies, the standard position should be OPTION 1.
 
 CANONICAL FIELD KEYS:
 - current_date
@@ -113,6 +108,16 @@ SECTION D ORDER:
 SECTION E ORDER:
 24. template_number
 
+Return valid JSON only in this exact format:
+{
+  "assistant_reply": "natural conversational reply for the user",
+  "extracted_fields": {},
+  "missing_items": [],
+  "next_question": "internal next question",
+  "next_options": [],
+  "is_complete": false
+}
+
 FIELD NOTES:
 - current_date should be in YYYY.MM.DD format
 - key_contact_name is name only
@@ -136,59 +141,14 @@ SPECIAL BEHAVIOR:
 - Missing placeholders are acceptable and may remain unreplaced in the final document.
 - For template selection, propose the most appropriate template based on the collected information and present the template choices clearly.
 
-OUTPUT FORMAT:
-{
-  "assistant_reply": "string",
-  "extracted_fields": {},
-  "missing_items": [],
-  "next_question": "string",
-  "next_options": [],
-  "is_complete": false
-}
-"""
-
-
 def _safe_fallback():
     return {
-        "assistant_reply": "Sorry, I had trouble understanding. Please continue with the next item.",
+        "assistant_reply": "Sorry, I had trouble understanding. Please continue.",
         "extracted_fields": {},
         "missing_items": [],
         "next_question": "",
         "next_options": [],
         "is_complete": False,
-    }
-
-
-def _normalize_result(data: dict) -> dict:
-    if not isinstance(data, dict):
-        return _safe_fallback()
-
-    assistant_reply = str(data.get("assistant_reply", "") or "").strip()
-    extracted_fields = data.get("extracted_fields", {})
-    missing_items = data.get("missing_items", [])
-    next_question = str(data.get("next_question", "") or "").strip()
-    next_options = data.get("next_options", [])
-    is_complete = bool(data.get("is_complete", False))
-
-    if not isinstance(extracted_fields, dict):
-        extracted_fields = {}
-
-    if not isinstance(missing_items, list):
-        missing_items = []
-
-    if not isinstance(next_options, list):
-        next_options = []
-
-    if next_question:
-        assistant_reply = next_question
-
-    return {
-        "assistant_reply": assistant_reply or "Please continue.",
-        "extracted_fields": extracted_fields,
-        "missing_items": [str(x) for x in missing_items],
-        "next_question": next_question,
-        "next_options": [str(x) for x in next_options],
-        "is_complete": is_complete,
     }
 
 
@@ -201,7 +161,7 @@ def run_document_driven_intake(source_documents: list[dict], known_answers: dict
 
     response = client.chat.completions.create(
         model="gpt-4.1-mini",
-        temperature=0,
+        temperature=0.2,
         response_format={"type": "json_object"},
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
@@ -213,6 +173,13 @@ def run_document_driven_intake(source_documents: list[dict], known_answers: dict
 
     try:
         data = json.loads(content)
-        return _normalize_result(data)
+        return {
+            "assistant_reply": str(data.get("assistant_reply", "") or "Please continue."),
+            "extracted_fields": data.get("extracted_fields", {}) if isinstance(data.get("extracted_fields", {}), dict) else {},
+            "missing_items": data.get("missing_items", []) if isinstance(data.get("missing_items", []), list) else [],
+            "next_question": str(data.get("next_question", "") or ""),
+            "next_options": data.get("next_options", []) if isinstance(data.get("next_options", []), list) else [],
+            "is_complete": bool(data.get("is_complete", False)),
+        }
     except Exception:
         return _safe_fallback()

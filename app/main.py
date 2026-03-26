@@ -575,12 +575,9 @@ db.commit()
 
 @app.get("/matters/{matter_id}/start", response_model=ChatResponse)
 def start_matter_intake(matter_id: int, db: Session = Depends(get_db)):
-    matter = db.query(Matter).filter(Matter.id == matter_id).first()
-    if not matter:
-        raise HTTPException(status_code=404, detail="Matter not found")
-
-    known_answers = get_answer_map(db, matter_id)
     source_documents = load_source_documents()
+
+    known_answers = get_known_answers(db, matter_id)
 
     result = run_document_driven_intake(
         source_documents=source_documents,
@@ -589,10 +586,11 @@ def start_matter_intake(matter_id: int, db: Session = Depends(get_db)):
     )
 
     assistant_reply = result.get("next_question") or result.get("assistant_reply", "Let's begin.")
+
     missing_items = result.get("missing_items", [])
-    next_question = result.get("next_question")
+    next_question = result.get("next_question", "")
     next_options = result.get("next_options", [])
-    is_complete = bool(result.get("is_complete", False))
+    is_complete = result.get("is_complete", False)
 
     db.add(
         Message(

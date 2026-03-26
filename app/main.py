@@ -503,7 +503,7 @@ def chat_with_matter(matter_id: int, payload: ChatRequest, db: Session = Depends
     known_answers = get_answer_map(db, matter_id)
     source_documents = load_source_documents()
 
-    # Ask OpenAI to drive intake from docs
+    # Ask OpenAI
     result = run_document_driven_intake(
         source_documents=source_documents,
         known_answers=known_answers,
@@ -513,37 +513,34 @@ def chat_with_matter(matter_id: int, payload: ChatRequest, db: Session = Depends
     extracted_fields = result.get("extracted_fields", {})
     saved_fields = {}
 
-SKIP_VALUES = {"skip", "not sure", "unknown", ""}
+    SKIP_VALUES = {"skip", "not sure", "unknown", ""}
 
-for key, value in extracted_fields.items():
-    if value is None:
-        continue
+    from datetime import datetime
 
-    clean_value = str(value).strip()
+    # ✅ THIS LOOP MUST BE INSIDE FUNCTION
+    for key, value in extracted_fields.items():
+        if value is None:
+            continue
 
-    # skip handling
-    if clean_value.lower() in SKIP_VALUES:
-        continue
+        clean_value = str(value).strip()
 
-    # save original field
-    upsert_answer(db, matter_id, key, clean_value)
-    saved_fields[key] = clean_value
+        if clean_value.lower() in SKIP_VALUES:
+            continue
 
-    # special handling for current_date
-    if key == "current_date":
-        try:
-            dt = datetime.strptime(clean_value, "%Y.%m.%d")
+        upsert_answer(db, matter_id, key, clean_value)
+        saved_fields[key] = clean_value
 
-            year = dt.strftime("%Y")
-            month = dt.strftime("%b")   # Jan, Feb, Mar
-            day = dt.strftime("%d")
+        # 🔥 date split logic
+        if key == "current_date":
+            try:
+                dt = datetime.strptime(clean_value, "%Y.%m.%d")
 
-            upsert_answer(db, matter_id, "year", year)
-            upsert_answer(db, matter_id, "month", month)
-            upsert_answer(db, matter_id, "date", day)
+                upsert_answer(db, matter_id, "year", dt.strftime("%Y"))
+                upsert_answer(db, matter_id, "month", dt.strftime("%b"))
+                upsert_answer(db, matter_id, "date", dt.strftime("%d"))
 
-        except Exception:
-            pass
+            except Exception:
+                pass
 
     db.commit()
 
@@ -553,7 +550,7 @@ for key, value in extracted_fields.items():
     next_options = result.get("next_options", [])
     is_complete = bool(result.get("is_complete", False))
 
-    # Save assistant message
+    # Save assistant reply
     db.add(
         Message(
             matter_id=matter_id,
@@ -562,7 +559,7 @@ for key, value in extracted_fields.items():
             content=assistant_reply
         )
     )
-db.commit()
+    db.commit()
 
     return ChatResponse(
         reply=assistant_reply,
@@ -577,7 +574,7 @@ db.commit()
 def start_matter_intake(matter_id: int, db: Session = Depends(get_db)):
     source_documents = load_source_documents()
 
-    known_answers = get_known_answers(db, matter_id)
+    known_answers = get_answer_map(db, matter_id)
 
     result = run_document_driven_intake(
         source_documents=source_documents,

@@ -1,9 +1,83 @@
-import os
+# openai_service.py
+
 import json
+import os
+from typing import Any
+
 from openai import OpenAI
 
 client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
+
+CANONICAL_FIELDS = [
+    "current_date",
+    "client_name",
+    "client_country",
+    "client_address",
+    "key_contact_name",
+    "key_contact_role",
+    "key_contact_email",
+    "key_contact_number",
+    "reg_no",
+    "countries_in_scope",
+    "service_modules",
+    "gop_log_authority",
+    "required_channels",
+    "required_hours",
+    "required_languages",
+    "expected_case_volume",
+    "sla_targets",
+    "pricing",
+    "third_party_cost_handling",
+    "onboarding",
+    "client_redlines",
+    "deadlines",
+    "competitors",
+    "template_number",
+    "credit_term",
+    "agreement_term",
+    "renewal_term",
+    "termination_notice",
+]
+
+SECTION_A = [
+    "current_date",
+    "client_name",
+    "client_country",
+    "client_address",
+    "key_contact_name",
+    "key_contact_role",
+    "key_contact_email",
+    "key_contact_number",
+    "reg_no",
+]
+
+SECTION_B = [
+    "countries_in_scope",
+    "service_modules",
+    "gop_log_authority",
+    "required_channels",
+    "required_hours",
+    "required_languages",
+]
+
+SECTION_C = [
+    "expected_case_volume",
+]
+
+SECTION_D = [
+    "sla_targets",
+    "pricing",
+    "third_party_cost_handling",
+    "onboarding",
+    "client_redlines",
+    "deadlines",
+    "competitors",
+]
+
+SECTION_E = [
+    "template_number",
+]
 
 SYSTEM_PROMPT = """
 You are the intake assistant for the BD Service Agreement Generator.
@@ -39,7 +113,7 @@ STRICT RULES:
    - Every option must represent exactly one value or concept only.
    - Options must be mutually exclusive. Do not combine multiple values in one option.
    - Include "Skip" as the LAST option.
-10. Whenever options are shown, you must tell the user: "You may reply with option numbers, type your own answer, or type "skip" if not relevant or unsure at this point."
+10. Whenever options are shown, you must tell the user: "You may reply with option numbers, type your own answer, or type \\"skip\\" if not relevant or unsure at this point."
 11. If standard positions apply from the clause library, include the standard position as an option and clearly indicate it is the standard position.
 12. For fields with a client-customisation possibility, present client customisation as OPTION 1 and the standard position as OPTION 2.
 13. If there is no client-customisation possibility and a standard position applies, the standard position should be OPTION 1.
@@ -140,8 +214,9 @@ SPECIAL BEHAVIOR:
 - If documents/notes/emails/RFPs are uploaded or provided in the context, extract all relevant information for Sections A-D, present the extracted information for confirmation, and only ask questions that do not have answers yet.
 - Missing placeholders are acceptable and may remain unreplaced in the final document.
 - For template selection, propose the most appropriate template based on the collected information and present the template choices clearly.
+"""
 
-def _safe_fallback():
+def _safe_fallback() -> dict[str, Any]:
     return {
         "assistant_reply": "Sorry, I had trouble understanding. Please continue.",
         "extracted_fields": {},
@@ -152,7 +227,36 @@ def _safe_fallback():
     }
 
 
-def run_document_driven_intake(source_documents: list[dict], known_answers: dict, user_message: str) -> dict:
+def _normalize_response(data: dict[str, Any]) -> dict[str, Any]:
+    extracted_fields = data.get("extracted_fields", {})
+    if not isinstance(extracted_fields, dict):
+        extracted_fields = {}
+
+    filtered_fields = {k: v for k, v in extracted_fields.items() if k in CANONICAL_FIELDS}
+
+    missing_items = data.get("missing_items", [])
+    if not isinstance(missing_items, list):
+        missing_items = []
+
+    next_options = data.get("next_options", [])
+    if not isinstance(next_options, list):
+        next_options = []
+
+    return {
+        "assistant_reply": str(data.get("assistant_reply", "") or "Please continue."),
+        "extracted_fields": filtered_fields,
+        "missing_items": [str(x) for x in missing_items],
+        "next_question": str(data.get("next_question", "") or ""),
+        "next_options": [str(x) for x in next_options],
+        "is_complete": bool(data.get("is_complete", False)),
+    }
+
+
+def run_document_driven_intake(
+    source_documents: list[dict[str, Any]],
+    known_answers: dict[str, Any],
+    user_message: str,
+) -> dict[str, Any]:
     payload = {
         "source_documents": source_documents,
         "known_answers": known_answers,
@@ -169,17 +273,12 @@ def run_document_driven_intake(source_documents: list[dict], known_answers: dict
         ],
     )
 
-    content = response.choices[0].message.content
+    content = response.choices[0].message.content or ""
 
     try:
         data = json.loads(content)
-        return {
-            "assistant_reply": str(data.get("assistant_reply", "") or "Please continue."),
-            "extracted_fields": data.get("extracted_fields", {}) if isinstance(data.get("extracted_fields", {}), dict) else {},
-            "missing_items": data.get("missing_items", []) if isinstance(data.get("missing_items", []), list) else [],
-            "next_question": str(data.get("next_question", "") or ""),
-            "next_options": data.get("next_options", []) if isinstance(data.get("next_options", []), list) else [],
-            "is_complete": bool(data.get("is_complete", False)),
-        }
+        if not isinstance(data, dict):
+            return _safe_fallback()
+        return _normalize_response(data)
     except Exception:
         return _safe_fallback()
